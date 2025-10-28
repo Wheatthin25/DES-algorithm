@@ -5,7 +5,7 @@
 # used this as reference for DES https://www.geeksforgeeks.org/computer-networks/data-encryption-standard-des-set-1/
 import os
 from bitarray import bitarray
-
+round_keys = []
 def blockify(input_txt):
     blocks = []
 
@@ -104,28 +104,23 @@ def key_left_shift(shift, key):
 
     return shifted_key
 
-
-
-def generate_round_keys(inital_key):
-    round_keys = []
-    # convert to 56 bit key
-    for i in range(0, len(inital_key), 8):
-        inital_key.pop(i)
-
-    # split into right hand side and left side
-    lhs = inital_key[:28].copy()
-    rhs = inital_key[28:].copy()
-
-    # round 1 gets shifted left once
-    lhs = key_left_shift(1, lhs)
-    rhs = key_left_shift(1, rhs)
+def generate_round_keys(rhs, lhs, i):
+    # shift left
+    # rounds 1, 2, 9, 16, left shift of 1
+    # rounds 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 left shift of 2
+    if i in [1, 2, 9, 16]:
+        lhs = key_left_shift(1, lhs)
+        rhs = key_left_shift(1, rhs)
+    else:
+        lhs = key_left_shift(2, lhs)
+        rhs = key_left_shift(2, rhs)
 
     # recombining halves + saving left hand side for next round
     next_lhs = lhs.copy()
     lhs.extend(rhs)
 
     # permutation 2
-    permutation_key = lhs.copy()
+    permutation_key = [None]*48
     permutation_key[0] = lhs[13]
     permutation_key[1] = lhs[16]
     permutation_key[2] = lhs[10]
@@ -179,9 +174,21 @@ def generate_round_keys(inital_key):
     permutation_key[45] = lhs[35]
     permutation_key[46] = lhs[28]
     permutation_key[47] = lhs[31]
-
     round_keys.append(permutation_key)
+    return next_lhs, rhs
 
+def generate_keys(inital_key):
+    # convert to 56 bit key
+    for i in range(0, len(inital_key), 8):
+        inital_key.pop(i)
+
+    # split into right hand side and left side
+    lhs = inital_key[:28].copy()
+    rhs = inital_key[28:].copy()
+    next_round_lhs, next_round_rhs = generate_round_keys(lhs, rhs, 1)
+    for i in range(2, 17):
+        next_round_lhs, next_round_rhs = generate_round_keys(next_round_lhs, next_round_rhs, i)
+    print(len(round_keys))
 
 
 
@@ -213,7 +220,7 @@ def main():
     init_key = bitarray(os.urandom(8))
 
     round_keys = []
-    generate_round_keys(init_key)
+    generate_keys(init_key)
 
     # print(blocks)
 
