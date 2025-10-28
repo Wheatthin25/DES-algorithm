@@ -1,0 +1,3 @@
+Hey this is the input file for a DES algorithm encryption.
+I should probably make this longer to make sure that this works correctly.
+Inputting some characters, woot woot.
