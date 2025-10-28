@@ -120,7 +120,7 @@ def generate_round_keys(rhs, lhs, i):
     lhs.extend(rhs)
 
     # permutation 2
-    permutation_key = [None]*48
+    permutation_key = bitarray(48)
     permutation_key[0] = lhs[13]
     permutation_key[1] = lhs[16]
     permutation_key[2] = lhs[10]
@@ -174,7 +174,11 @@ def generate_round_keys(rhs, lhs, i):
     permutation_key[45] = lhs[35]
     permutation_key[46] = lhs[28]
     permutation_key[47] = lhs[31]
+
+    # add round i key to list
     round_keys.append(permutation_key)
+
+    # return the next round's lhs and rhs
     return next_lhs, rhs
 
 def generate_keys(inital_key):
@@ -185,27 +189,86 @@ def generate_keys(inital_key):
     # split into right hand side and left side
     lhs = inital_key[:28].copy()
     rhs = inital_key[28:].copy()
+
+    # do first key to initialize
     next_round_lhs, next_round_rhs = generate_round_keys(lhs, rhs, 1)
     for i in range(2, 17):
+        # generate rest of keys with prev rhs and lhs
         next_round_lhs, next_round_rhs = generate_round_keys(next_round_lhs, next_round_rhs, i)
-    print(len(round_keys))
+
+def expand_block(rpt):
+    expanded = bitarray(48)
+
+    expanded[0] = rpt[31]
+    expanded[1] = rpt[0]
+    expanded[2] = rpt[1]
+    expanded[3] = rpt[2]
+    expanded[4] = rpt[3]
+    expanded[5] = rpt[4]
+
+    expanded[6] = rpt[3]
+    expanded[7] = rpt[4]
+    expanded[8] = rpt[5]
+    expanded[9] = rpt[6]
+    expanded[10] = rpt[7]
+    expanded[11] = rpt[8]
+
+    expanded[12] = rpt[7]
+    expanded[13] = rpt[8]
+    expanded[14] = rpt[9]
+    expanded[15] = rpt[10]
+    expanded[16] = rpt[11]
+    expanded[17] = rpt[12]
+
+    expanded[18] = rpt[11]
+    expanded[19] = rpt[12]
+    expanded[20] = rpt[13]
+    expanded[21] = rpt[14]
+    expanded[22] = rpt[15]
+    expanded[23] = rpt[16]
+
+    expanded[24] = rpt[15]
+    expanded[25] = rpt[16]
+    expanded[26] = rpt[17]
+    expanded[27] = rpt[18]
+    expanded[28] = rpt[19]
+    expanded[29] = rpt[20]
+
+    expanded[30] = rpt[19]
+    expanded[31] = rpt[20]
+    expanded[32] = rpt[21]
+    expanded[33] = rpt[22]
+    expanded[34] = rpt[23]
+    expanded[35] = rpt[24]
+
+    expanded[36] = rpt[23]
+    expanded[37] = rpt[24]
+    expanded[38] = rpt[25]
+    expanded[39] = rpt[26]
+    expanded[40] = rpt[27]
+    expanded[41] = rpt[28]
+
+    expanded[42] = rpt[27]
+    expanded[43] = rpt[28]
+    expanded[44] = rpt[29]
+    expanded[45] = rpt[30]
+    expanded[46] = rpt[31]
+    expanded[47] = rpt[0]
+
+    return expanded
+def feistel_rounds(block, round):
+    lpt = block[:32].copy()
+    rpt = block[32:].copy()
+
+    # first, rpt will go through expansion permutation
+    expanded = expand_block(rpt)
+    # second, rpt will be xored with round key
+    expanded = expanded ^ round_keys[round]
 
 
 
 
-
-
-
-def encryption():
-    pass
-
-
-def decryption():
-    pass
-def main():
-    # read file
-    ifile = open("input.txt", "r")
-    input = ifile.read()
+def encryption(input):
     # turn everything into 64 bit blocks
     blocks = blockify(input)
 
@@ -216,12 +279,34 @@ def main():
     for i in range(len(blocks)):
         blocks[i] = initial_perm(blocks[i], iv)
 
+    print(blocks)
     # randomly generate key
     init_key = bitarray(os.urandom(8))
 
-    round_keys = []
+    # create round keys
     generate_keys(init_key)
 
-    # print(blocks)
+    # for every fiestel round, go through every block
+    for round in range(0, 16):
+        for block in blocks:
+            feistel_rounds(block, round)
+
+
+
+
+def decryption():
+    pass
+
+def main():
+    # read file
+    ifile = open("input.txt", "r")
+    input = ifile.read()
+
+    # encrypt
+    encryption(input)
+
+
+
+
 
 main()
