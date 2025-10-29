@@ -542,6 +542,11 @@ def keyed_substitution(expanded):
         s_boxes.append(text)
         i += 1
 
+    # rejoin all the 6-bit segments
+    for j in range(1, 8):
+        s_boxes[0] += s_boxes[j]
+
+    return s_boxes[0]
 
 
 def feistel_rounds(block, round):
@@ -554,7 +559,7 @@ def feistel_rounds(block, round):
     expanded = expanded ^ round_keys[round]
 
     # third, create s boxes for keyed substitution
-    keyed_substitution(expanded)
+    subbed = keyed_substitution(expanded)
 
 
 
