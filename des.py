@@ -260,6 +260,11 @@ def expand_block(rpt):
     return expanded
 
 def lookup_s_table_1(x, y):
+    # change from bit arrays to tuples, then create the tuple of them together
+    bit_x = tuple(map(int, x))
+    bit_y = tuple(map(int, y))
+    key = (bit_y, bit_x)
+
     table = {
         ((0, 0), (0, 0, 0, 0)): 14, ((0, 0), (0, 0, 0, 1)): 4, ((0, 0), (0, 0, 1, 0)): 13, ((0, 0), (0, 0, 1, 1)): 1,
         ((0, 0), (0, 1, 0, 0)): 2, ((0, 0), (0, 1, 0, 1)): 15, ((0, 0), (0, 1, 1, 0)): 11, ((0, 0), (0, 1, 1, 1)): 8,
@@ -282,7 +287,15 @@ def lookup_s_table_1(x, y):
         ((1, 1), (1, 1, 0, 0)): 10, ((1, 1), (1, 1, 0, 1)): 0, ((1, 1), (1, 1, 1, 0)): 6, ((1, 1), (1, 1, 1, 1)): 13
     }
 
+    bits = format(table[key], "04b")
+    return bitarray(bits)
+
 def lookup_s_table_2(x, y):
+    # change from bit arrays to tuples, then create the tuple of them together
+    bit_x = tuple(map(int, x))
+    bit_y = tuple(map(int, y))
+    key = (bit_y, bit_x)
+
     table = {
         ((0, 0), (0, 0, 0, 0)): 15, ((0, 0), (0, 0, 0, 1)): 1, ((0, 0), (0, 0, 1, 0)): 8, ((0, 0), (0, 0, 1, 1)): 14,
         ((0, 0), (0, 1, 0, 0)): 6, ((0, 0), (0, 1, 0, 1)): 11, ((0, 0), (0, 1, 1, 0)): 3, ((0, 0), (0, 1, 1, 1)): 4,
@@ -305,7 +318,15 @@ def lookup_s_table_2(x, y):
         ((1, 1), (1, 1, 0, 0)): 2, ((1, 1), (1, 1, 0, 1)): 5, ((1, 1), (1, 1, 1, 0)): 14, ((1, 1), (1, 1, 1, 1)): 9
     }
 
+    bits = format(table[key], "04b")
+    return bitarray(bits)
+
 def lookup_s_table_3(x, y):
+    # change from bit arrays to tuples, then create the tuple of them together
+    bit_x = tuple(map(int, x))
+    bit_y = tuple(map(int, y))
+    key = (bit_y, bit_x)
+
     table = {
         ((0, 0), (0, 0, 0, 0)): 10, ((0, 0), (0, 0, 0, 1)): 0, ((0, 0), (0, 0, 1, 0)): 9, ((0, 0), (0, 0, 1, 1)): 14,
         ((0, 0), (0, 1, 0, 0)): 6, ((0, 0), (0, 1, 0, 1)): 3, ((0, 0), (0, 1, 1, 0)): 15, ((0, 0), (0, 1, 1, 1)): 5,
@@ -328,10 +349,16 @@ def lookup_s_table_3(x, y):
         ((1, 1), (1, 1, 0, 0)): 11, ((1, 1), (1, 1, 0, 1)): 5, ((1, 1), (1, 1, 1, 0)): 2, ((1, 1), (1, 1, 1, 1)): 12
     }
 
+    bits = format(table[key], "04b")
+    return bitarray(bits)
 
 def lookup_s_table_4(x, y):
-    table = {
+    # change from bit arrays to tuples, then create the tuple of them together
+    bit_x = tuple(map(int, x))
+    bit_y = tuple(map(int, y))
+    key = (bit_y, bit_x)
 
+    table = {
         ((0, 0), (0, 0, 0, 0)): 7, ((0, 0), (0, 0, 0, 1)): 13, ((0, 0), (0, 0, 1, 0)): 14, ((0, 0), (0, 0, 1, 1)): 3,
         ((0, 0), (0, 1, 0, 0)): 0, ((0, 0), (0, 1, 0, 1)): 6, ((0, 0), (0, 1, 1, 0)): 9, ((0, 0), (0, 1, 1, 1)): 10,
         ((0, 0), (1, 0, 0, 0)): 1, ((0, 0), (1, 0, 0, 1)): 2, ((0, 0), (1, 0, 1, 0)): 8, ((0, 0), (1, 0, 1, 1)): 5,
@@ -353,8 +380,14 @@ def lookup_s_table_4(x, y):
         ((1, 1), (1, 1, 0, 0)): 12, ((1, 1), (1, 1, 0, 1)): 7, ((1, 1), (1, 1, 1, 0)): 2, ((1, 1), (1, 1, 1, 1)): 14
     }
 
-
+    bits = format(table[key], "04b")
+    return bitarray(bits)
 def lookup_s_table_5(x, y):
+    # change from bit arrays to tuples, then create the tuple of them together
+    bit_x = tuple(map(int, x))
+    bit_y = tuple(map(int, y))
+    key = (bit_y, bit_x)
+
     table = {
         ((0, 0), (0, 0, 0, 0)): 2, ((0, 0), (0, 0, 0, 1)): 12, ((0, 0), (0, 0, 1, 0)): 4, ((0, 0), (0, 0, 1, 1)): 1,
         ((0, 0), (0, 1, 0, 0)): 7, ((0, 0), (0, 1, 0, 1)): 10, ((0, 0), (0, 1, 1, 0)): 11, ((0, 0), (0, 1, 1, 1)): 6,
@@ -377,8 +410,15 @@ def lookup_s_table_5(x, y):
         ((1, 1), (1, 1, 0, 0)): 10, ((1, 1), (1, 1, 0, 1)): 4, ((1, 1), (1, 1, 1, 0)): 5, ((1, 1), (1, 1, 1, 1)): 3
     }
 
+    bits = format(table[key], "04b")
+    return bitarray(bits)
 
 def lookup_s_table_6(x, y):
+    # change from bit arrays to tuples, then create the tuple of them together
+    bit_x = tuple(map(int, x))
+    bit_y = tuple(map(int, y))
+    key = (bit_y, bit_x)
+
     table = {
         ((0, 0), (0, 0, 0, 0)): 12, ((0, 0), (0, 0, 0, 1)): 1, ((0, 0), (0, 0, 1, 0)): 10, ((0, 0), (0, 0, 1, 1)): 15,
         ((0, 0), (0, 1, 0, 0)): 9, ((0, 0), (0, 1, 0, 1)): 2, ((0, 0), (0, 1, 1, 0)): 6, ((0, 0), (0, 1, 1, 1)): 8,
@@ -401,8 +441,15 @@ def lookup_s_table_6(x, y):
         ((1, 1), (1, 1, 0, 0)): 6, ((1, 1), (1, 1, 0, 1)): 0, ((1, 1), (1, 1, 1, 0)): 8, ((1, 1), (1, 1, 1, 1)): 13
     }
 
+    bits = format(table[key], "04b")
+    return bitarray(bits)
 
 def lookup_s_table_7(x, y):
+    # change from bit arrays to tuples, then create the tuple of them together
+    bit_x = tuple(map(int, x))
+    bit_y = tuple(map(int, y))
+    key = (bit_y, bit_x)
+
     table = {
         ((0, 0), (0, 0, 0, 0)): 4, ((0, 0), (0, 0, 0, 1)): 11, ((0, 0), (0, 0, 1, 0)): 2, ((0, 0), (0, 0, 1, 1)): 14,
         ((0, 0), (0, 1, 0, 0)): 15, ((0, 0), (0, 1, 0, 1)): 0, ((0, 0), (0, 1, 1, 0)): 8, ((0, 0), (0, 1, 1, 1)): 13,
@@ -425,8 +472,14 @@ def lookup_s_table_7(x, y):
         ((1, 1), (1, 1, 0, 0)): 14, ((1, 1), (1, 1, 0, 1)): 2, ((1, 1), (1, 1, 1, 0)): 3, ((1, 1), (1, 1, 1, 1)): 12
     }
 
-
+    bits = format(table[key], "04b")
+    return bitarray(bits)
 def lookup_s_table_8(x, y):
+    # change from bit arrays to tuples, then create the tuple of them together
+    bit_x = tuple(map(int, x))
+    bit_y = tuple(map(int, y))
+    key = (bit_y, bit_x)
+
     table = {
         ((0, 0), (0, 0, 0, 0)): 13, ((0, 0), (0, 0, 0, 1)): 2, ((0, 0), (0, 0, 1, 0)): 8, ((0, 0), (0, 0, 1, 1)): 4,
         ((0, 0), (0, 1, 0, 0)): 6, ((0, 0), (0, 1, 0, 1)): 15, ((0, 0), (0, 1, 1, 0)): 11, ((0, 0), (0, 1, 1, 1)): 1,
@@ -448,7 +501,8 @@ def lookup_s_table_8(x, y):
         ((1, 1), (1, 0, 0, 0)): 15, ((1, 1), (1, 0, 0, 1)): 12, ((1, 1), (1, 0, 1, 0)): 9, ((1, 1), (1, 0, 1, 1)): 0,
         ((1, 1), (1, 1, 0, 0)): 3, ((1, 1), (1, 1, 0, 1)): 5, ((1, 1), (1, 1, 1, 0)): 6, ((1, 1), (1, 1, 1, 1)): 11
     }
-
+    bits = format(table[key], "04b")
+    return bitarray(bits)
 
 def keyed_substitution(expanded):
     # divide expanded into 8 6 bit chunks
@@ -466,7 +520,7 @@ def keyed_substitution(expanded):
         y[1] = text[5]
 
         # x is middle values
-        x = text[1:5]
+        x[:] = text[1:5]
 
         # send to table
         if i == 1:
