@@ -605,7 +605,7 @@ def feistel_rounds(block, round):
     # next left hand is initial right hand side
     nrpt = subbed ^ lpt
 
-    return rpt, nrpt
+    return rpt + nrpt
 
 
 def encryption(input):
@@ -626,9 +626,13 @@ def encryption(input):
     generate_keys(init_key)
 
     # for every fiestel round, go through every block
-    for round in range(0, 16):
-        for block in blocks:
-            nlpt, nrpt = feistel_rounds(block, round)
+    for round in range(1, 16):
+        for i in range(len(blocks)):
+            npt = feistel_rounds(blocks[i], 0)
+            blocks[i] = npt
+
+    # after encryption, should return blocks
+    return blocks
 
 
 
@@ -643,7 +647,20 @@ def main():
     input = ifile.read()
 
     # encrypt
-    encryption(input)
+    blocks = encryption(input)
+
+    # write to output file
+    ofile = open("input.txt.enc", "wb")
+
+    # to write, have to turn them all into strings again
+    for block in blocks:
+        block = block.tobytes()
+        ofile.write(block)
+
+
+    # close files
+    ifile.close()
+    ofile.close()
 
 
 
