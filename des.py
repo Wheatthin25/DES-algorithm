@@ -607,6 +607,81 @@ def feistel_rounds(block, round):
 
     return rpt + nrpt
 
+def final_perm(block):
+    block2 = block.copy()
+    block2[57] = block[0]
+    block2[49] = block[1]
+    block2[41] = block[2]
+    block2[33] = block[3]
+    block2[25] = block[4]
+    block2[17] = block[5]
+    block2[9] = block[6]
+    block2[1] = block[7]
+
+    block2[59] = block[8]
+    block2[51] = block[9]
+    block2[43] = block[10]
+    block2[35] = block[11]
+    block2[27] = block[12]
+    block2[19] = block[13]
+    block2[11] = block[14]
+    block2[3] = block[15]
+
+    block2[61] = block[16]
+    block2[53] = block[17]
+    block2[45] = block[18]
+    block2[37] = block[19]
+    block2[29] = block[20]
+    block2[21] = block[21]
+    block2[13] = block[22]
+    block2[5] = block[23]
+
+    block2[63] = block[24]
+    block2[55] = block[25]
+    block2[47] = block[26]
+    block2[39] = block[27]
+    block2[31] = block[28]
+    block2[23] = block[29]
+    block2[15] = block[30]
+    block2[7] = block[31]
+
+    block2[56] = block[32]
+    block2[48] = block[33]
+    block2[40] = block[34]
+    block2[32] = block[35]
+    block2[24] = block[36]
+    block2[16] = block[37]
+    block2[8] = block[38]
+    block2[0] = block[39]
+
+    block2[58] = block[40]
+    block2[50] = block[41]
+    block2[42] = block[42]
+    block2[34] = block[43]
+    block2[26] = block[44]
+    block2[18] = block[45]
+    block2[10] = block[46]
+    block2[2] = block[47]
+
+    block2[60] = block[48]
+    block2[52] = block[49]
+    block2[44] = block[50]
+    block2[36] = block[51]
+    block2[28] = block[52]
+    block2[20] = block[53]
+    block2[12] = block[54]
+    block2[4] = block[55]
+
+    block2[62] = block[56]
+    block2[54] = block[57]
+    block2[46] = block[58]
+    block2[38] = block[59]
+    block2[30] = block[60]
+    block2[22] = block[61]
+    block2[14] = block[62]
+    block2[6] = block[63]
+
+    return block2
 
 def encryption(input):
     # turn everything into 64 bit blocks
@@ -631,6 +706,15 @@ def encryption(input):
             npt = feistel_rounds(blocks[i], 0)
             blocks[i] = npt
 
+    # 32 bit swap - swap sides
+    for i in range(len(blocks)):
+        temp = blocks[i][:32].copy()
+        blocks[i][:32] = blocks[i][32:]
+        blocks[i][32:] = temp[:]
+
+        # final permutation
+        blocks[i] = final_perm(blocks[i])
+
     # after encryption, should return blocks
     return blocks
 
@@ -645,7 +729,6 @@ def main():
     # read file
     ifile = open("input.txt", "r")
     input = ifile.read()
-
     # encrypt
     blocks = encryption(input)
 
