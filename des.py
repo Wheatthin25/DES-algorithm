@@ -3,6 +3,8 @@
 # CBC on 61
 
 # used this as reference for DES https://www.geeksforgeeks.org/computer-networks/data-encryption-standard-des-set-1/
+# just used conceptual ideas in beginning half
+
 import os
 from bitarray import bitarray
 round_keys = []
@@ -548,6 +550,40 @@ def keyed_substitution(expanded):
 
     return s_boxes[0]
 
+def p_box_perm(subbed):
+    subbed[0] = subbed[15]
+    subbed[1] = subbed[6]
+    subbed[2] = subbed[19]
+    subbed[3] = subbed[20]
+    subbed[4] = subbed[28]
+    subbed[5] = subbed[11]
+    subbed[6] = subbed[27]
+    subbed[7] = subbed[16]
+    subbed[8] = subbed[0]
+    subbed[9] = subbed[14]
+    subbed[10] = subbed[22]
+    subbed[11] = subbed[25]
+    subbed[12] = subbed[4]
+    subbed[13] = subbed[17]
+    subbed[14] = subbed[30]
+    subbed[15] = subbed[9]
+    subbed[16] = subbed[1]
+    subbed[17] = subbed[7]
+    subbed[18] = subbed[23]
+    subbed[19] = subbed[13]
+    subbed[20] = subbed[31]
+    subbed[21] = subbed[26]
+    subbed[22] = subbed[2]
+    subbed[23] = subbed[8]
+    subbed[24] = subbed[18]
+    subbed[25] = subbed[12]
+    subbed[26] = subbed[29]
+    subbed[27] = subbed[5]
+    subbed[28] = subbed[21]
+    subbed[29] = subbed[10]
+    subbed[30] = subbed[3]
+    subbed[31] = subbed[24]
+
 
 def feistel_rounds(block, round):
     lpt = block[:32].copy()
@@ -561,9 +597,15 @@ def feistel_rounds(block, round):
     # third, create s boxes for keyed substitution
     subbed = keyed_substitution(expanded)
 
+    # finally, gets permutated again
+    # permutating in place, so no need for re-assignment
+    p_box_perm(subbed)
 
+    # next right hand is subbed xored with left hand side
+    # next left hand is initial right hand side
+    nrpt = subbed ^ lpt
 
-
+    return rpt, nrpt
 
 
 def encryption(input):
@@ -586,7 +628,8 @@ def encryption(input):
     # for every fiestel round, go through every block
     for round in range(0, 16):
         for block in blocks:
-            feistel_rounds(block, round)
+            nlpt, nrpt = feistel_rounds(block, round)
+
 
 
 
