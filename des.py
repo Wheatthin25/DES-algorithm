@@ -8,19 +8,30 @@
 import os
 from bitarray import bitarray
 round_keys = []
-def blockify(input_txt):
-    blocks = []
-    org_blocks = []
-    for index in range(0, len(input_txt), 8):
-        if (len(input_txt) - index) < 7:
-            text = bitarray((input_txt[index:] + '\0' * (8 - len(input_txt[index:]))).encode('utf-8'))
-            blocks.append(text)
-            org_blocks.append(text)
-        else:
-            text = bitarray(input_txt[index: index + 8].encode('utf-8'))
-            blocks.append(text)
-            org_blocks.append(text)
-    return blocks, org_blocks
+def blockify(input_txt, flag):
+    if flag:
+        blocks = []
+        org_blocks = []
+        # for encrypting
+        for index in range(0, len(input_txt), 8):
+            if (len(input_txt) - index) < 7:
+                text = bitarray((input_txt[index:] + '\0' * (8 - len(input_txt[index:]))).encode('utf-8'))
+                blocks.append(text)
+                org_blocks.append(text)
+            else:
+                text = bitarray(input_txt[index: index + 8].encode('utf-8'))
+                blocks.append(text)
+                org_blocks.append(text)
+        return blocks, org_blocks
+    else:
+        cblocks = []
+        org_cblocks = []
+        # for decrypting - in bytes
+        for index in range(0, len(input_txt), 8):
+            text = bitarray(input_txt[index: index + 8])
+            cblocks.append(text)
+            org_cblocks.append(text)
+        return cblocks, org_cblocks
 
 def initial_perm(block, iv):
     # using fixed permutation table
@@ -585,7 +596,7 @@ def p_box_perm(subbed):
     subbed[31] = subbed[24]
 
 
-def feistel_rounds(block, round):
+def feistel_rounds(block, round, round_keys):
     lpt = block[:32].copy()
     rpt = block[32:].copy()
 
@@ -685,7 +696,7 @@ def final_perm(block):
 
 def encryption(input):
     # turn everything into 64 bit blocks
-    blocks, org_blocks = blockify(input)
+    blocks, org_blocks = blockify(input, True)
 
     # create initilization vector 64 bit
     iv = bitarray(os.urandom(8))
@@ -703,7 +714,7 @@ def encryption(input):
     # for every fiestel round, go through every block
     for round in range(1, 16):
         for i in range(len(blocks)):
-            npt = feistel_rounds(blocks[i], 0)
+            npt = feistel_rounds(blocks[i], 0, round_keys)
             blocks[i] = npt
 
     # 32 bit swap - swap sides
@@ -722,8 +733,44 @@ def encryption(input):
 
 
 
-def decryption():
-    pass
+def decryption(ciphertext):
+    # go through keys backwards
+    # turn everything into 64 bit blocks
+    cblocks, org_cblocks = blockify(ciphertext, False)
+
+    # create initilization vector 64 bit
+    iv = bitarray(os.urandom(8))
+
+    # do init perm for all blocks and save it
+    for i in range(len(cblocks)):
+        cblocks[i] = initial_perm(cblocks[i], iv)
+
+    # randomly generate key
+    init_key = bitarray(os.urandom(8))
+
+    # create round keys
+    generate_keys(init_key)
+
+    # for every fiestel round, go through every block
+    for round in range(1, 16):
+        for i in range(len(cblocks)):
+            print(round_keys)
+            print(round_keys[::-1])
+            npt = feistel_rounds(cblocks[i], 0, round_keys[::-1])
+            cblocks[i] = npt
+
+    # 32 bit swap - swap sides
+    for i in range(len(cblocks)):
+        temp = cblocks[i][:32].copy()
+        cblocks[i][:32] = cblocks[i][32:]
+        cblocks[i][32:] = temp[:]
+
+        # final permutation
+        cblocks[i] = final_perm(cblocks[i])
+
+    # after decryption, should return blocks
+    return cblocks
+
 
 def main():
     # read file
@@ -739,11 +786,23 @@ def main():
     for block in blocks:
         block = block.tobytes()
         ofile.write(block)
+    # close file
+    ofile.close()
 
+    # decrypt the text
+
+    # read in file
+    cfile = open("input.txt.enc", "rb")
+    ciphertext = cfile.read()
+    cblocks = decryption(ciphertext)
+    for block in cblocks:
+        text = block.tobytes()
+        #text = text.decode('utf-8')
+        #print(text)
 
     # close files
     ifile.close()
-    ofile.close()
+
 
 
 
