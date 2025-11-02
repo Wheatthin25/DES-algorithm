@@ -694,19 +694,13 @@ def final_perm(block):
 
     return block2
 
-def encryption(input):
+def encryption(input, init_key, iv):
     # turn everything into 64 bit blocks
     blocks, org_blocks = blockify(input, True)
-
-    # create initilization vector 64 bit
-    iv = bitarray(os.urandom(8))
 
     # do init perm for all blocks and save it
     for i in range(len(blocks)):
         blocks[i] = initial_perm(blocks[i], iv)
-
-    # randomly generate key
-    init_key = bitarray(os.urandom(8))
 
     # create round keys
     generate_keys(init_key)
@@ -715,6 +709,9 @@ def encryption(input):
     for round in range(1, 16):
         for i in range(len(blocks)):
             npt = feistel_rounds(blocks[i], 0, round_keys)
+            # npt is next rounds ciphertext
+            # for cbc, have to xor it with plaintext
+            ciphtext = npt ^ org_blocks[i]
             blocks[i] = npt
 
     # 32 bit swap - swap sides
@@ -733,20 +730,20 @@ def encryption(input):
 
 
 
-def decryption(ciphertext):
+def decryption(ciphertext, init_key, iv):
     # go through keys backwards
     # turn everything into 64 bit blocks
     cblocks, org_cblocks = blockify(ciphertext, False)
 
     # create initilization vector 64 bit
-    iv = bitarray(os.urandom(8))
+    #iv = bitarray(os.urandom(8))
 
     # do init perm for all blocks and save it
     for i in range(len(cblocks)):
         cblocks[i] = initial_perm(cblocks[i], iv)
 
     # randomly generate key
-    init_key = bitarray(os.urandom(8))
+    # init_key = bitarray(os.urandom(8))
 
     # create round keys
     generate_keys(init_key)
@@ -754,8 +751,8 @@ def decryption(ciphertext):
     # for every fiestel round, go through every block
     for round in range(1, 16):
         for i in range(len(cblocks)):
-            print(round_keys)
-            print(round_keys[::-1])
+            # print(round_keys)
+            # print(round_keys[::-1])
             npt = feistel_rounds(cblocks[i], 0, round_keys[::-1])
             cblocks[i] = npt
 
@@ -776,8 +773,17 @@ def main():
     # read file
     ifile = open("input.txt", "r")
     input = ifile.read()
+
+    # randomly generate key
+    init_key = bitarray(os.urandom(8))
+
+    init_key_cpy = init_key.copy()
+
+    # create initilization vector 64 bit
+    iv = bitarray(os.urandom(8))
+
     # encrypt
-    blocks = encryption(input)
+    blocks = encryption(input, init_key, iv)
 
     # write to output file
     ofile = open("input.txt.enc", "wb")
@@ -794,11 +800,11 @@ def main():
     # read in file
     cfile = open("input.txt.enc", "rb")
     ciphertext = cfile.read()
-    cblocks = decryption(ciphertext)
+    cblocks = decryption(ciphertext, init_key_cpy, iv)
     for block in cblocks:
         text = block.tobytes()
-        #text = text.decode('utf-8')
-        #print(text)
+        # text = text.decode('utf-8')
+        print(text)
 
     # close files
     ifile.close()
