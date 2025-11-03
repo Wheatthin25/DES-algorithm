@@ -5,8 +5,8 @@
 # used this as reference for DES https://www.geeksforgeeks.org/computer-networks/data-encryption-standard-des-set-1/
 # just used conceptual ideas in beginning half
 
-import os
 from bitarray import bitarray
+from bitarray.util import ba2hex
 round_keys = []
 def blockify(input_txt, flag):
     if flag:
@@ -33,9 +33,9 @@ def blockify(input_txt, flag):
             org_cblocks.append(text)
         return cblocks, org_cblocks
 
-def initial_perm(block, iv):
+def initial_perm(block):
     # using fixed permutation table
-    block2 = block.copy() ^ iv
+    block2 = block.copy()
     block2[0] = block[57]
     block2[1] = block[49]
     block2[2] = block[41]
@@ -116,7 +116,6 @@ def key_left_shift(shift, key):
     for i in range(shift - 1, -1, -1):
         shifted_key[j] = key[i]
         j -= 1
-
     return shifted_key
 
 def generate_round_keys(rhs, lhs, i):
@@ -191,25 +190,27 @@ def generate_round_keys(rhs, lhs, i):
     permutation_key[47] = lhs[31]
 
     # add round i key to list
-    round_keys.append(permutation_key)
+    # round_keys.append(permutation_key)
 
     # return the next round's lhs and rhs
-    return next_lhs, rhs
+    return next_lhs, rhs, permutation_key
 
 def generate_keys(inital_key):
     # convert to 56 bit key
-    for i in range(0, len(inital_key), 8):
-        inital_key.pop(i)
-
-    # split into right hand side and left side
-    lhs = inital_key[:28].copy()
-    rhs = inital_key[28:].copy()
+    init_key = inital_key[:7] + inital_key[8:15] + inital_key[16:23] + inital_key[24:31]
+    init_key += inital_key[32:39] + inital_key[40:47] + inital_key[48:55] + inital_key[56:63]
+    rounds = []
+    rounds.append(init_key)
 
     # do first key to initialize
-    next_round_lhs, next_round_rhs = generate_round_keys(lhs, rhs, 1)
-    for i in range(2, 17):
+
+    for i in range(16):
         # generate rest of keys with prev rhs and lhs
-        next_round_lhs, next_round_rhs = generate_round_keys(next_round_lhs, next_round_rhs, i)
+        next_round_lhs, next_round_rhs, round_key = generate_round_keys(rounds[i][:28].copy(), rounds[i][28:].copy(), i + 1)
+        round_keys.append(round_key)
+        rounds.append(next_round_lhs + next_round_rhs)
+
+
 
 def expand_block(rpt):
     expanded = bitarray(48)
@@ -694,13 +695,15 @@ def final_perm(block):
 
     return block2
 
-def encryption(input, init_key, iv):
+def encryption(input, init_key):
     # turn everything into 64 bit blocks
     blocks, org_blocks = blockify(input, True)
 
     # do init perm for all blocks and save it
     for i in range(len(blocks)):
-        blocks[i] = initial_perm(blocks[i], iv)
+        blocks[i] = initial_perm(blocks[i])
+        hex_str = ba2hex(blocks[i])
+        print(hex_str)
 
     # create round keys
     generate_keys(init_key)
@@ -710,8 +713,6 @@ def encryption(input, init_key, iv):
         for i in range(len(blocks)):
             npt = feistel_rounds(blocks[i], 0, round_keys)
             # npt is next rounds ciphertext
-            # for cbc, have to xor it with plaintext
-            ciphtext = npt ^ org_blocks[i]
             blocks[i] = npt
 
     # 32 bit swap - swap sides
@@ -730,23 +731,14 @@ def encryption(input, init_key, iv):
 
 
 
-def decryption(ciphertext, init_key, iv):
+def decryption(ciphertext):
     # go through keys backwards
     # turn everything into 64 bit blocks
     cblocks, org_cblocks = blockify(ciphertext, False)
 
-    # create initilization vector 64 bit
-    #iv = bitarray(os.urandom(8))
-
     # do init perm for all blocks and save it
     for i in range(len(cblocks)):
-        cblocks[i] = initial_perm(cblocks[i], iv)
-
-    # randomly generate key
-    # init_key = bitarray(os.urandom(8))
-
-    # create round keys
-    generate_keys(init_key)
+        cblocks[i] = initial_perm(cblocks[i])
 
     # for every fiestel round, go through every block
     for round in range(1, 16):
@@ -775,15 +767,17 @@ def main():
     input = ifile.read()
 
     # randomly generate key
-    init_key = bitarray(os.urandom(8))
+    # init_key = bitarray(os.urandom(8))
+    key = "AABB09182736CCDD"
+    key = int(key, 16)
+    key = format(key, "64b")
+    init_key = bitarray(key)
 
-    init_key_cpy = init_key.copy()
 
-    # create initilization vector 64 bit
-    iv = bitarray(os.urandom(8))
 
     # encrypt
-    blocks = encryption(input, init_key, iv)
+    blocks = encryption(input, init_key)
+
 
     # write to output file
     ofile = open("input.txt.enc", "wb")
@@ -800,7 +794,8 @@ def main():
     # read in file
     cfile = open("input.txt.enc", "rb")
     ciphertext = cfile.read()
-    cblocks = decryption(ciphertext, init_key_cpy, iv)
+
+    cblocks = decryption(ciphertext)
     for block in cblocks:
         text = block.tobytes()
         # text = text.decode('utf-8')
