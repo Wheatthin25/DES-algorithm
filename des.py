@@ -15,11 +15,13 @@ def blockify(input_txt, flag):
         org_blocks = []
         # for encrypting
         for index in range(0, len(input_txt), 8):
+            # separates into 8 byte chunks
             if (len(input_txt) - index) < 7:
                 text = bitarray((input_txt[index:] + '\0' * (8 - len(input_txt[index:]))).encode('utf-8'))
                 blocks.append(text)
                 org_blocks.append(text)
             else:
+                # if chunk is not quite 8 bytes, then pad to make 8 bytes
                 text = bitarray(input_txt[index: index + 8].encode('utf-8'))
                 blocks.append(text)
                 org_blocks.append(text)
@@ -28,6 +30,7 @@ def blockify(input_txt, flag):
         cblocks = []
         org_cblocks = []
         # for decrypting - in bytes
+        # don't have to check block len because it is padded when encrypting
         for index in range(0, len(input_txt), 8):
             text = bitarray(input_txt[index: index + 8])
             cblocks.append(text)
@@ -112,8 +115,11 @@ def initial_perm(block):
     return block2
 
 def key_left_shift(shift, key):
+    # performs a bit shift
     shifted_key = key << shift
     j = -1
+    # appends the shifted off bits onto end
+    # DES requires circular left shift
     for i in range(shift - 1, -1, -1):
         shifted_key[j] = key[i]
         j -= 1
@@ -136,7 +142,7 @@ def generate_round_keys(lhs, rhs, i):
     # after shifting
     next_key = lhs.copy()
 
-    # permutation 2
+    # permutation 2 using predefined table
     permutation_key = bitarray(48)
     permutation_key[0] = lhs[13]
     permutation_key[1] = lhs[16]
@@ -192,30 +198,29 @@ def generate_round_keys(lhs, rhs, i):
     permutation_key[46] = lhs[28]
     permutation_key[47] = lhs[31]
 
-    # add round i key to list
-    # round_keys.append(permutation_key)
-
     # return the next round's lhs and rhs
     return next_key, permutation_key
 
 def generate_keys(inital_key):
-    # convert to 56 bit key
+    # convert to 56 bit key - removes every 8th bit
     init_key = inital_key[:7] + inital_key[8:15] + inital_key[16:23] + inital_key[24:31]
     init_key += inital_key[32:39] + inital_key[40:47] + inital_key[48:55] + inital_key[56:63]
     rounds = []
     rounds.append(init_key)
 
-    # do first key to initialize
 
     for i in range(16):
-        # generate rest of keys with prev rhs and lhs
+        # generate keys with prev rhs and lhs
         next_round_key, round_key = generate_round_keys(rounds[i][:28].copy(), rounds[i][28:].copy(), i + 1)
+        # adds round key to round_keys list
+        # adds next lhs to rounds
         round_keys.append(round_key)
         rounds.append(next_round_key)
 
 
 
 def expand_block(rpt):
+    # using predefined permutation table
     expanded = bitarray(48)
 
     expanded[0] = rpt[31]
@@ -282,6 +287,7 @@ def lookup_s_table_1(x, y):
     bit_y = tuple(map(int, y))
     key = (bit_y, bit_x)
 
+    # uses the key to find the value to substitute with
     table = {
         ((0, 0), (0, 0, 0, 0)): 14, ((0, 0), (0, 0, 0, 1)): 4, ((0, 0), (0, 0, 1, 0)): 13, ((0, 0), (0, 0, 1, 1)): 1,
         ((0, 0), (0, 1, 0, 0)): 2, ((0, 0), (0, 1, 0, 1)): 15, ((0, 0), (0, 1, 1, 0)): 11, ((0, 0), (0, 1, 1, 1)): 8,
@@ -304,6 +310,7 @@ def lookup_s_table_1(x, y):
         ((1, 1), (1, 1, 0, 0)): 10, ((1, 1), (1, 1, 0, 1)): 0, ((1, 1), (1, 1, 1, 0)): 6, ((1, 1), (1, 1, 1, 1)): 13
     }
 
+    # returns the value in binary as a bitarray
     bits = format(table[key], "04b")
     return bitarray(bits)
 
@@ -313,6 +320,7 @@ def lookup_s_table_2(x, y):
     bit_y = tuple(map(int, y))
     key = (bit_y, bit_x)
 
+    # uses the key to find the value to substitute with
     table = {
         ((0, 0), (0, 0, 0, 0)): 15, ((0, 0), (0, 0, 0, 1)): 1, ((0, 0), (0, 0, 1, 0)): 8, ((0, 0), (0, 0, 1, 1)): 14,
         ((0, 0), (0, 1, 0, 0)): 6, ((0, 0), (0, 1, 0, 1)): 11, ((0, 0), (0, 1, 1, 0)): 3, ((0, 0), (0, 1, 1, 1)): 4,
@@ -334,7 +342,7 @@ def lookup_s_table_2(x, y):
         ((1, 1), (1, 0, 0, 0)): 11, ((1, 1), (1, 0, 0, 1)): 6, ((1, 1), (1, 0, 1, 0)): 7, ((1, 1), (1, 0, 1, 1)): 12,
         ((1, 1), (1, 1, 0, 0)): 2, ((1, 1), (1, 1, 0, 1)): 5, ((1, 1), (1, 1, 1, 0)): 14, ((1, 1), (1, 1, 1, 1)): 9
     }
-
+    # returns the value in binary as a bitarray
     bits = format(table[key], "04b")
     return bitarray(bits)
 
@@ -343,7 +351,7 @@ def lookup_s_table_3(x, y):
     bit_x = tuple(map(int, x))
     bit_y = tuple(map(int, y))
     key = (bit_y, bit_x)
-
+    # uses the key to find the value to substitute with
     table = {
         ((0, 0), (0, 0, 0, 0)): 10, ((0, 0), (0, 0, 0, 1)): 0, ((0, 0), (0, 0, 1, 0)): 9, ((0, 0), (0, 0, 1, 1)): 14,
         ((0, 0), (0, 1, 0, 0)): 6, ((0, 0), (0, 1, 0, 1)): 3, ((0, 0), (0, 1, 1, 0)): 15, ((0, 0), (0, 1, 1, 1)): 5,
@@ -365,7 +373,7 @@ def lookup_s_table_3(x, y):
         ((1, 1), (1, 0, 0, 0)): 4, ((1, 1), (1, 0, 0, 1)): 15, ((1, 1), (1, 0, 1, 0)): 14, ((1, 1), (1, 0, 1, 1)): 3,
         ((1, 1), (1, 1, 0, 0)): 11, ((1, 1), (1, 1, 0, 1)): 5, ((1, 1), (1, 1, 1, 0)): 2, ((1, 1), (1, 1, 1, 1)): 12
     }
-
+    # returns the value in binary as a bitarray
     bits = format(table[key], "04b")
     return bitarray(bits)
 
@@ -374,7 +382,7 @@ def lookup_s_table_4(x, y):
     bit_x = tuple(map(int, x))
     bit_y = tuple(map(int, y))
     key = (bit_y, bit_x)
-
+    # uses the key to find the value to substitute with
     table = {
         ((0, 0), (0, 0, 0, 0)): 7, ((0, 0), (0, 0, 0, 1)): 13, ((0, 0), (0, 0, 1, 0)): 14, ((0, 0), (0, 0, 1, 1)): 3,
         ((0, 0), (0, 1, 0, 0)): 0, ((0, 0), (0, 1, 0, 1)): 6, ((0, 0), (0, 1, 1, 0)): 9, ((0, 0), (0, 1, 1, 1)): 10,
@@ -396,7 +404,7 @@ def lookup_s_table_4(x, y):
         ((1, 1), (1, 0, 0, 0)): 9, ((1, 1), (1, 0, 0, 1)): 4, ((1, 1), (1, 0, 1, 0)): 5, ((1, 1), (1, 0, 1, 1)): 11,
         ((1, 1), (1, 1, 0, 0)): 12, ((1, 1), (1, 1, 0, 1)): 7, ((1, 1), (1, 1, 1, 0)): 2, ((1, 1), (1, 1, 1, 1)): 14
     }
-
+    # returns the value in binary as a bitarray
     bits = format(table[key], "04b")
     return bitarray(bits)
 def lookup_s_table_5(x, y):
@@ -404,7 +412,7 @@ def lookup_s_table_5(x, y):
     bit_x = tuple(map(int, x))
     bit_y = tuple(map(int, y))
     key = (bit_y, bit_x)
-
+    # uses the key to find the value to substitute with
     table = {
         ((0, 0), (0, 0, 0, 0)): 2, ((0, 0), (0, 0, 0, 1)): 12, ((0, 0), (0, 0, 1, 0)): 4, ((0, 0), (0, 0, 1, 1)): 1,
         ((0, 0), (0, 1, 0, 0)): 7, ((0, 0), (0, 1, 0, 1)): 10, ((0, 0), (0, 1, 1, 0)): 11, ((0, 0), (0, 1, 1, 1)): 6,
@@ -426,7 +434,7 @@ def lookup_s_table_5(x, y):
         ((1, 1), (1, 0, 0, 0)): 6, ((1, 1), (1, 0, 0, 1)): 15, ((1, 1), (1, 0, 1, 0)): 0, ((1, 1), (1, 0, 1, 1)): 9,
         ((1, 1), (1, 1, 0, 0)): 10, ((1, 1), (1, 1, 0, 1)): 4, ((1, 1), (1, 1, 1, 0)): 5, ((1, 1), (1, 1, 1, 1)): 3
     }
-
+    # returns the value in binary as a bitarray
     bits = format(table[key], "04b")
     return bitarray(bits)
 
@@ -435,7 +443,7 @@ def lookup_s_table_6(x, y):
     bit_x = tuple(map(int, x))
     bit_y = tuple(map(int, y))
     key = (bit_y, bit_x)
-
+    # uses the key to find the value to substitute with
     table = {
         ((0, 0), (0, 0, 0, 0)): 12, ((0, 0), (0, 0, 0, 1)): 1, ((0, 0), (0, 0, 1, 0)): 10, ((0, 0), (0, 0, 1, 1)): 15,
         ((0, 0), (0, 1, 0, 0)): 9, ((0, 0), (0, 1, 0, 1)): 2, ((0, 0), (0, 1, 1, 0)): 6, ((0, 0), (0, 1, 1, 1)): 8,
@@ -457,7 +465,7 @@ def lookup_s_table_6(x, y):
         ((1, 1), (1, 0, 0, 0)): 11, ((1, 1), (1, 0, 0, 1)): 14, ((1, 1), (1, 0, 1, 0)): 1, ((1, 1), (1, 0, 1, 1)): 7,
         ((1, 1), (1, 1, 0, 0)): 6, ((1, 1), (1, 1, 0, 1)): 0, ((1, 1), (1, 1, 1, 0)): 8, ((1, 1), (1, 1, 1, 1)): 13
     }
-
+    # returns the value in binary as a bitarray
     bits = format(table[key], "04b")
     return bitarray(bits)
 
@@ -466,7 +474,7 @@ def lookup_s_table_7(x, y):
     bit_x = tuple(map(int, x))
     bit_y = tuple(map(int, y))
     key = (bit_y, bit_x)
-
+    # uses the key to find the value to substitute with
     table = {
         ((0, 0), (0, 0, 0, 0)): 4, ((0, 0), (0, 0, 0, 1)): 11, ((0, 0), (0, 0, 1, 0)): 2, ((0, 0), (0, 0, 1, 1)): 14,
         ((0, 0), (0, 1, 0, 0)): 15, ((0, 0), (0, 1, 0, 1)): 0, ((0, 0), (0, 1, 1, 0)): 8, ((0, 0), (0, 1, 1, 1)): 13,
@@ -488,7 +496,7 @@ def lookup_s_table_7(x, y):
         ((1, 1), (1, 0, 0, 0)): 9, ((1, 1), (1, 0, 0, 1)): 5, ((1, 1), (1, 0, 1, 0)): 0, ((1, 1), (1, 0, 1, 1)): 15,
         ((1, 1), (1, 1, 0, 0)): 14, ((1, 1), (1, 1, 0, 1)): 2, ((1, 1), (1, 1, 1, 0)): 3, ((1, 1), (1, 1, 1, 1)): 12
     }
-
+    # returns the value in binary as a bitarray
     bits = format(table[key], "04b")
     return bitarray(bits)
 def lookup_s_table_8(x, y):
@@ -496,7 +504,7 @@ def lookup_s_table_8(x, y):
     bit_x = tuple(map(int, x))
     bit_y = tuple(map(int, y))
     key = (bit_y, bit_x)
-
+    # uses the key to find the value to substitute with
     table = {
         ((0, 0), (0, 0, 0, 0)): 13, ((0, 0), (0, 0, 0, 1)): 2, ((0, 0), (0, 0, 1, 0)): 8, ((0, 0), (0, 0, 1, 1)): 4,
         ((0, 0), (0, 1, 0, 0)): 6, ((0, 0), (0, 1, 0, 1)): 15, ((0, 0), (0, 1, 1, 0)): 11, ((0, 0), (0, 1, 1, 1)): 1,
@@ -518,17 +526,18 @@ def lookup_s_table_8(x, y):
         ((1, 1), (1, 0, 0, 0)): 15, ((1, 1), (1, 0, 0, 1)): 12, ((1, 1), (1, 0, 1, 0)): 9, ((1, 1), (1, 0, 1, 1)): 0,
         ((1, 1), (1, 1, 0, 0)): 3, ((1, 1), (1, 1, 0, 1)): 5, ((1, 1), (1, 1, 1, 0)): 6, ((1, 1), (1, 1, 1, 1)): 11
     }
+    # returns the value in binary as a bitarray
     bits = format(table[key], "04b")
     return bitarray(bits)
 
 def keyed_substitution(expanded):
-    # divide expanded into 8 6 bit chunks
+    # convert each s box into 4 bits using pre-defined lookup tables
     s_boxes = []
     i = 1
+    # divide expanded into 8 6 bit chunks
     for index in range(0, len(expanded), 6):
         text = expanded[index: index + 6]
 
-        # convert each s box into 4 bits using pre-defined lookup tables
         y = bitarray(2)
         x = bitarray(4)
 
@@ -540,6 +549,7 @@ def keyed_substitution(expanded):
         x[:] = text[1:5]
 
         # send to table
+        # each segment gets sent to different table
         if i == 1:
             text = lookup_s_table_1(x, y)
         elif i == 2:
@@ -556,6 +566,8 @@ def keyed_substitution(expanded):
             text = lookup_s_table_7(x, y)
         elif i == 8:
             text = lookup_s_table_8(x, y)
+
+        # gets back value to substitute in binary as a bit array
         s_boxes.append(text)
         i += 1
 
@@ -566,6 +578,7 @@ def keyed_substitution(expanded):
     return s_boxes[0]
 
 def p_box_perm(subbed):
+    # permutation according to pre-defined tables
     subbed2 = subbed.copy()
     subbed[0] = subbed2[15]
     subbed[1] = subbed2[6]
@@ -600,15 +613,17 @@ def p_box_perm(subbed):
     subbed[30] = subbed2[3]
     subbed[31] = subbed2[24]
 
+    # permutates in place, so no need to return/reassign
 
 
 def feistel_rounds(block, round, round_keys):
+    # splits the block into left plain text and right plain text
     lpt = block[:32].copy()
     rpt = block[32:].copy()
 
     # first, rpt will go through expansion permutation
     expanded = expand_block(rpt)
-    # second, rpt will be xored with round key
+    # second, rpt will be xor-ed with round key
     expanded = expanded ^ round_keys[round]
     # third, create s boxes for keyed substitution
     subbed = keyed_substitution(expanded)
@@ -617,13 +632,14 @@ def feistel_rounds(block, round, round_keys):
     # permutating in place, so no need for re-assignment
     p_box_perm(subbed)
 
-    # next right hand is subbed xored with left hand side
-    # next left hand is initial right hand side
+    # next right hand is subbed xor-ed with left hand side
     nrpt = subbed ^ lpt
-
+    # the next left hand is initial right hand side
+    # the next right hand side is left side xor-ed with modified right hand side
     return rpt + nrpt
 
 def final_perm(block):
+    # permutation following pre-defined permutation table
     block2 = block.copy()
     block2[57] = block[0]
     block2[49] = block[1]
@@ -713,12 +729,14 @@ def encryption(input, init_key):
 
     # for every fiestel round, go through every block
     for i in range(len(blocks)):
+        # for every block, go through 16 rounds
         for round in range(0, 16):
             npt = feistel_rounds(blocks[i], round, round_keys)
             # npt is next rounds ciphertext
+            # after each round, reassign that block to the next round's ciphertext
             blocks[i] = npt
 
-    # 32 bit swap - swap sides
+    # for each block, 32 bit swap - swap sides
     for i in range(len(blocks)):
         # saving left
         temp = blocks[i][:32].copy()
@@ -733,12 +751,9 @@ def encryption(input, init_key):
     # after encryption, should return blocks
     return blocks
 
-
-
-
-
 def decryption(ciphertext):
-    # go through keys backwards
+    # decryption is same as encryption except has reverse key order
+
     # turn everything into 64 bit blocks
     cblocks, org_cblocks = blockify(ciphertext, False)
 
@@ -762,30 +777,30 @@ def decryption(ciphertext):
         # final permutation
         cblocks[i] = final_perm(cblocks[i])
 
-    # after decryption, should return blocks
+    # after decryption, should return cblocks
     return cblocks
 
 
 def main():
 
-    # read file
+    # open file
     ifile_name = sys.argv[1]
     try:
         ifile = open(ifile_name, "r")
     except Exception as err:
+        # if input file creates err, just return
         print(f"Error: {err} ")
         print("Exiting program...")
         return
+
+    # if input file name exists, read
     input = ifile.read()
 
-    # randomly generate key
-    # init_key = bitarray(os.urandom(8))
+    # turning predefined key into bitarray from hex string
     key = "AABB09182736CCDD"
     key = int(key, 16)
     key = format(key, "64b")
     init_key = bitarray(key)
-
-
 
     # encrypt
     blocks = encryption(input, init_key)
@@ -801,33 +816,32 @@ def main():
     # close file
     ofile.close()
 
-    # decrypt the text
 
-    # read in file
+    # read in encyrpted file
     cfile = open(ofile_name, "rb")
     ciphertext = cfile.read()
 
+    # decrypt the text
     cblocks = decryption(ciphertext)
 
     output_txt = ""
 
+    # turn output back into one string
     for i in range(len(cblocks)):
         text = cblocks[i].tobytes()
         output_txt += text.decode('utf-8')
 
     final_name = ofile_name + ".dec"
+
+    # change output to get rid of padding
     output_txt = output_txt.rstrip('\0')
+
+    # write to file
     output_file = open(final_name, "w")
     output_file.write(output_txt)
-
-    # print(output_txt)
 
     # close files
     ifile.close()
     output_file.close()
-
-
-
-
 
 main()
