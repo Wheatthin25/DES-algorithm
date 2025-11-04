@@ -6,6 +6,7 @@
 # just used conceptual ideas in beginning half
 
 from bitarray import bitarray
+import sys
 
 round_keys = []
 def blockify(input_txt, flag):
@@ -766,8 +767,15 @@ def decryption(ciphertext):
 
 
 def main():
+
     # read file
-    ifile = open("input.txt", "r")
+    ifile_name = sys.argv[1]
+    try:
+        ifile = open(ifile_name, "r")
+    except Exception as err:
+        print(f"Error: {err} ")
+        print("Exiting program...")
+        return
     input = ifile.read()
 
     # randomly generate key
@@ -782,9 +790,9 @@ def main():
     # encrypt
     blocks = encryption(input, init_key)
 
-
+    ofile_name = ifile_name + ".enc"
     # write to output file
-    ofile = open("input.txt.enc", "wb")
+    ofile = open(ofile_name, "wb")
 
     # to write, have to turn them all into strings again
     for block in blocks:
@@ -796,7 +804,7 @@ def main():
     # decrypt the text
 
     # read in file
-    cfile = open("input.txt.enc", "rb")
+    cfile = open(ofile_name, "rb")
     ciphertext = cfile.read()
 
     cblocks = decryption(ciphertext)
@@ -807,12 +815,16 @@ def main():
         text = cblocks[i].tobytes()
         output_txt += text.decode('utf-8')
 
+    final_name = ofile_name + ".dec"
     output_txt = output_txt.rstrip('\0')
+    output_file = open(final_name, "w")
+    output_file.write(output_txt)
 
-    print(output_txt)
+    # print(output_txt)
 
     # close files
     ifile.close()
+    output_file.close()
 
 
 
