@@ -118,10 +118,16 @@ def key_left_shift(shift, key):
         j -= 1
     return shifted_key
 
-def generate_round_keys(rhs, lhs, i):
+def generate_round_keys(lhs, rhs, i):
     # shift left
     # rounds 1, 2, 9, 16, left shift of 1
     # rounds 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 left shift of 2
+    # recombining halves + saving left hand side for next round
+
+
+
+    print(f"Round{i} Inital: {lhs + rhs}")
+
     if i in [1, 2, 9, 16]:
         lhs = key_left_shift(1, lhs)
         rhs = key_left_shift(1, rhs)
@@ -129,9 +135,14 @@ def generate_round_keys(rhs, lhs, i):
         lhs = key_left_shift(2, lhs)
         rhs = key_left_shift(2, rhs)
 
-    # recombining halves + saving left hand side for next round
-    next_lhs = lhs.copy()
-    lhs.extend(rhs)
+    lhs += rhs
+    # after shifting
+    next_key = lhs.copy()
+    print(f"Round{i} shifting: {lhs}")
+
+
+
+
 
     # permutation 2
     permutation_key = bitarray(48)
@@ -193,7 +204,7 @@ def generate_round_keys(rhs, lhs, i):
     # round_keys.append(permutation_key)
 
     # return the next round's lhs and rhs
-    return next_lhs, rhs, permutation_key
+    return next_key, permutation_key
 
 def generate_keys(inital_key):
     # convert to 56 bit key
@@ -206,9 +217,9 @@ def generate_keys(inital_key):
 
     for i in range(16):
         # generate rest of keys with prev rhs and lhs
-        next_round_lhs, next_round_rhs, round_key = generate_round_keys(rounds[i][:28].copy(), rounds[i][28:].copy(), i + 1)
+        next_round_key, round_key = generate_round_keys(rounds[i][:28].copy(), rounds[i][28:].copy(), i + 1)
         round_keys.append(round_key)
-        rounds.append(next_round_lhs + next_round_rhs)
+        rounds.append(next_round_key)
 
 
 
@@ -703,10 +714,13 @@ def encryption(input, init_key):
     for i in range(len(blocks)):
         blocks[i] = initial_perm(blocks[i])
         hex_str = ba2hex(blocks[i])
-        print(hex_str)
+
 
     # create round keys
     generate_keys(init_key)
+
+    for key in round_keys:
+        print(key)
 
     # for every fiestel round, go through every block
     for round in range(1, 16):
@@ -804,7 +818,7 @@ def main():
     # close files
     ifile.close()
 
-
+    print("101011100001011011010000101011001001101011011000" == "101011100001011011010000101011001001101011011000")
 
 
 
