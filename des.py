@@ -6,7 +6,7 @@
 # just used conceptual ideas in beginning half
 
 from bitarray import bitarray
-from bitarray.util import ba2hex
+
 round_keys = []
 def blockify(input_txt, flag):
     if flag:
@@ -124,10 +124,6 @@ def generate_round_keys(lhs, rhs, i):
     # rounds 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 left shift of 2
     # recombining halves + saving left hand side for next round
 
-
-
-    print(f"Round{i} Inital: {lhs + rhs}")
-
     if i in [1, 2, 9, 16]:
         lhs = key_left_shift(1, lhs)
         rhs = key_left_shift(1, rhs)
@@ -138,11 +134,6 @@ def generate_round_keys(lhs, rhs, i):
     lhs += rhs
     # after shifting
     next_key = lhs.copy()
-    print(f"Round{i} shifting: {lhs}")
-
-
-
-
 
     # permutation 2
     permutation_key = bitarray(48)
@@ -574,38 +565,40 @@ def keyed_substitution(expanded):
     return s_boxes[0]
 
 def p_box_perm(subbed):
-    subbed[0] = subbed[15]
-    subbed[1] = subbed[6]
-    subbed[2] = subbed[19]
-    subbed[3] = subbed[20]
-    subbed[4] = subbed[28]
-    subbed[5] = subbed[11]
-    subbed[6] = subbed[27]
-    subbed[7] = subbed[16]
-    subbed[8] = subbed[0]
-    subbed[9] = subbed[14]
-    subbed[10] = subbed[22]
-    subbed[11] = subbed[25]
-    subbed[12] = subbed[4]
-    subbed[13] = subbed[17]
-    subbed[14] = subbed[30]
-    subbed[15] = subbed[9]
-    subbed[16] = subbed[1]
-    subbed[17] = subbed[7]
-    subbed[18] = subbed[23]
-    subbed[19] = subbed[13]
-    subbed[20] = subbed[31]
-    subbed[21] = subbed[26]
-    subbed[22] = subbed[2]
-    subbed[23] = subbed[8]
-    subbed[24] = subbed[18]
-    subbed[25] = subbed[12]
-    subbed[26] = subbed[29]
-    subbed[27] = subbed[5]
-    subbed[28] = subbed[21]
-    subbed[29] = subbed[10]
-    subbed[30] = subbed[3]
-    subbed[31] = subbed[24]
+    subbed2 = subbed.copy()
+    subbed[0] = subbed2[15]
+    subbed[1] = subbed2[6]
+    subbed[2] = subbed2[19]
+    subbed[3] = subbed2[20]
+    subbed[4] = subbed2[28]
+    subbed[5] = subbed2[11]
+    subbed[6] = subbed2[27]
+    subbed[7] = subbed2[16]
+    subbed[8] = subbed2[0]
+    subbed[9] = subbed2[14]
+    subbed[10] = subbed2[22]
+    subbed[11] = subbed2[25]
+    subbed[12] = subbed2[4]
+    subbed[13] = subbed2[17]
+    subbed[14] = subbed2[30]
+    subbed[15] = subbed2[9]
+    subbed[16] = subbed2[1]
+    subbed[17] = subbed2[7]
+    subbed[18] = subbed2[23]
+    subbed[19] = subbed2[13]
+    subbed[20] = subbed2[31]
+    subbed[21] = subbed2[26]
+    subbed[22] = subbed2[2]
+    subbed[23] = subbed2[8]
+    subbed[24] = subbed2[18]
+    subbed[25] = subbed2[12]
+    subbed[26] = subbed2[29]
+    subbed[27] = subbed2[5]
+    subbed[28] = subbed2[21]
+    subbed[29] = subbed2[10]
+    subbed[30] = subbed2[3]
+    subbed[31] = subbed2[24]
+
 
 
 def feistel_rounds(block, round, round_keys):
@@ -616,7 +609,6 @@ def feistel_rounds(block, round, round_keys):
     expanded = expand_block(rpt)
     # second, rpt will be xored with round key
     expanded = expanded ^ round_keys[round]
-
     # third, create s boxes for keyed substitution
     subbed = keyed_substitution(expanded)
 
@@ -713,26 +705,25 @@ def encryption(input, init_key):
     # do init perm for all blocks and save it
     for i in range(len(blocks)):
         blocks[i] = initial_perm(blocks[i])
-        hex_str = ba2hex(blocks[i])
 
 
     # create round keys
     generate_keys(init_key)
 
-    for key in round_keys:
-        print(key)
-
     # for every fiestel round, go through every block
-    for round in range(1, 16):
-        for i in range(len(blocks)):
-            npt = feistel_rounds(blocks[i], 0, round_keys)
+    for i in range(len(blocks)):
+        for round in range(0, 16):
+            npt = feistel_rounds(blocks[i], round, round_keys)
             # npt is next rounds ciphertext
             blocks[i] = npt
 
     # 32 bit swap - swap sides
     for i in range(len(blocks)):
+        # saving left
         temp = blocks[i][:32].copy()
+        #assigning left to right
         blocks[i][:32] = blocks[i][32:]
+        # assigning right to org left
         blocks[i][32:] = temp[:]
 
         # final permutation
@@ -755,11 +746,10 @@ def decryption(ciphertext):
         cblocks[i] = initial_perm(cblocks[i])
 
     # for every fiestel round, go through every block
-    for round in range(1, 16):
-        for i in range(len(cblocks)):
-            # print(round_keys)
-            # print(round_keys[::-1])
-            npt = feistel_rounds(cblocks[i], 0, round_keys[::-1])
+    for i in range(len(cblocks)):
+        for round in range(0, 16):
+            npt = feistel_rounds(cblocks[i], round, round_keys[::-1])
+            # npt is next rounds ciphertext
             cblocks[i] = npt
 
     # 32 bit swap - swap sides
@@ -810,15 +800,20 @@ def main():
     ciphertext = cfile.read()
 
     cblocks = decryption(ciphertext)
-    for block in cblocks:
-        text = block.tobytes()
-        # text = text.decode('utf-8')
-        print(text)
+
+    output_txt = ""
+
+    for i in range(len(cblocks)):
+        text = cblocks[i].tobytes()
+        output_txt += text.decode('utf-8')
+
+    output_txt = output_txt.rstrip('\0')
+
+    print(output_txt)
 
     # close files
     ifile.close()
 
-    print("101011100001011011010000101011001001101011011000" == "101011100001011011010000101011001001101011011000")
 
 
 
